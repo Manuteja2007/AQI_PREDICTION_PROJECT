@@ -1,0 +1,12 @@
+# Core scientific stack
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.5.2
+joblib==1.4.2
+
+# Web framework
+Flask==3.0.3
+
+# Optional: for plotting (if you plan to add visualizations later)
+matplotlib==3.9.2
+seaborn==0.13.2

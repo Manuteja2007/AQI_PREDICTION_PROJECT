@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AQI Prediction System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --good: #009966;
+      --moderate: #ffde33;
+      --sensitive: #ff9933;
+      --unhealthy: #cc0033;
+      --very-unhealthy: #660099;
+      --hazardous: #7e0023;
+      --primary: #007bff;
+      --primary-dark: #0056b3;
+      --light-bg: #f8f9fa;
+      --border: #dee2e6;
+      --text: #333;
+      --text-light: #6c757d;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--light-bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      overflow: hidden;
+    }
+    
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .content {
+      padding: 30px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    
+    @media (max-width: 768px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .form-section {
+      background: var(--light-bg);
+      padding: 25px;
+      border-radius: 12px;
+    }
+    
+    .info-section {
+      padding: 25px;
+      border-left: 1px solid var(--border);
+    }
+    
+    @media (max-width: 768px) {
+      .info-section {
+        border-left: none;
+        border-top: 1px solid var(--border);
+      }
+    }
+    
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    h2 i {
+      font-size: 1.5rem;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    
+    @media (max-width: 480px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .info-icon {
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+    
+    input:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+    
+    button {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border: none;
+      padding: 15px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .result {
+      margin-top: 30px;
+      padding: 25px;
+      border-radius: 12px;
+      background: var(--light-bg);
+      text-align: center;
+    }
+    
+    .aqi-gauge {
+      width: 100%;
+      height: 30px;
+      background: linear-gradient(90deg, var(--good), var(--moderate), var(--sensitive), var(--unhealthy), var(--very-unhealthy), var(--hazardous));
+      border-radius: 15px;
+      margin: 20px 0;
+      position: relative;
+    }
+    
+    .gauge-needle {
+      position: absolute;
+      top: -5px;
+      width: 3px;
+      height: 40px;
+      background: #000;
+      transform: translateX(-50%);
+      transition: left 1s ease;
+    }
+    
+    .category-label {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 15px 0;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    
+    .prediction-values {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    @media (max-width: 480px) {
+      .prediction-values {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .prediction-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .prediction-card h3 {
+      font-size: 1rem;
+      color: var(--text-light);
+      margin-bottom: 10px;
+    }
+    
+    .prediction-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    .aqi-info {
+      margin-top: 30px;
+    }
+    
+    .category {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+    
+    .color-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      margin-right: 15px;
+    }
+    
+    .category-info {
+      flex: 1;
+    }
+    
+    .category-name {
+      font-weight: 600;
+    }
+    
+    .category-range {
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+    
+    .loading {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 10px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -100px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-weight: normal;
+      font-size: 0.9rem;
+    }
+    
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-wind"></i> AQI Prediction System</h1>
+      <p class="subtitle">Enter current air quality parameters to predict the Air Quality Index and receive forecasts</p>
+    </header>
+    
+    <div class="content">
+      <div class="form-section">
+        <h2><i class="fas fa-sliders-h"></i> Input Parameters</h2>
+        
+        <form method="POST" id="prediction-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="pm25">
+                PM2.5
+                <div class="tooltip">
+                  <i class="fas fa-info-circle info-icon"></i>
+                  <span class="tooltiptext">Fine particulate matter (2.5 micrometers or smaller)</span>
+                </div>
+              </label>
+              <input type="number" step="0.01" name="pm25" id="pm25" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="pm10">
+                PM10
+                <div class="tooltip">
+                  <i class="fas fa-info-circle info-icon"></i>
+                  <span class="tooltiptext">Coarse particulate matter (10 micrometers or smaller)</span>
+                </div>
+              </label>
+              <input type="number" step="0.01" name="pm10" id="pm10" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="no2">
+                NO₂
+                <div class="tooltip">
+                  <i class="fas fa-info-circle info-icon"></i>
+                  <span class="tooltiptext">Nitrogen Dioxide - primarily from vehicle emissions</span>
+                </div>
+              </label>
+              <input type="number" step="0.01" name="no2" id="no2" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="so2">
+                SO₂
+                <div class="tooltip">
+                  <i class="fas fa-info-circle info-icon"></i>
+                  <span class="tooltiptext">Sulfur Dioxide - from burning fossil fuels</span>
+                </div>
+              </label>
+              <input type="number" step="0.01" name="so2" id="so2" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="co">
+                CO
+                <div class="tooltip">
+                  <i class="fas fa-info-circle info-icon"></i>
+                  <span class="tooltiptext">Carbon Monoxide - from incomplete combustion</span>
+                </div>
+              </label>
+              <input type="number" step="0.01" name="co" id="co" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="o3">
+                O₃
+                <div class="tooltip">
+                  <i class="fas fa-info-circle info-icon"></i>
+                  <span class="tooltiptext">Ozone - formed by chemical reactions in the atmosphere</span>
+                </div>
+              </label>
+              <input type="number" step="0.01" name="o3" id="o3" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="temp">
+                Temperature (°C)
+                <div class="tooltip">
+                  <i class="fas fa-info-circle info-icon"></i>
+                  <span class="tooltiptext">Ambient air temperature in Celsius</span>
+                </div>
+              </label>
+              <input type="number" step="0.1" name="temp" id="temp" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="humidity">
+                Humidity (%)
+                <div class="tooltip">
+                  <i class="fas fa-info-circle info-icon"></i>
+                  <span class="tooltiptext">Relative humidity percentage</span>
+                </div>
+              </label>
+              <input type="number" step="0.1" name="humidity" id="humidity" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="wind_speed">
+                Wind Speed (m/s)
+                <div class="tooltip">
+                  <i class="fas fa-info-circle info-icon"></i>
+                  <span class="tooltiptext">Wind speed in meters per second</span>
+                </div>
+              </label>
+              <input type="number" step="0.1" name="wind_speed" id="wind_speed" required>
+            </div>
+          </div>
+          
+          <button type="submit" id="predict-btn">
+            <i class="fas fa-calculator"></i> Predict AQI
+            <div class="loading" id="loading"></div>
+          </button>
+        </form>
+        
+        <!-- Results Section -->
+        <div class="result" id="result-section" style="display: none;">
+          <h2>Prediction Results</h2>
+          
+          <div class="aqi-gauge">
+            <div class="gauge-needle" id="gauge-needle"></div>
+          </div>
+          
+          <div class="category-label" id="category-label">
+            Good
+          </div>
+          
+          <div class="prediction-values">
+            <div class="prediction-card">
+              <h3>Predicted PM2.5</h3>
+              <div class="prediction-value" id="pm25-value">32.5</div>
+            </div>
+            
+            <div class="prediction-card">
+              <h3>Forecasted AQI (24h)</h3>
+              <div class="prediction-value" id="aqi-value">45</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="info-section">
+        <h2><i class="fas fa-info-circle"></i> About AQI</h2>
+        <p>The Air Quality Index (AQI) is used by government agencies to communicate to the public how polluted the air currently is or how polluted it is forecast to become.</p>
+        
+        <div class="aqi-info">
+          <div class="category">
+            <div class="color-box" style="background-color: var(--good);"></div>
+            <div class="category-info">
+              <div class="category-name">Good (0-50)</div>
+              <div class="category-range">Air quality is satisfactory</div>
+            </div>
+          </div>
+          
+          <div class="category">
+            <div class="color-box" style="background-color: var(--moderate);"></div>
+            <div class="category-info">
+              <div class="category-name">Moderate (51-100)</div>
+              <div class="category-range">Acceptable air quality</div>
+            </div>
+          </div>
+          
+          <div class="category">
+            <div class="color-box" style="background-color: var(--sensitive);"></div>
+            <div class="category-info">
+              <div class="category-name">Unhealthy for Sensitive Groups (101-150)</div>
+              <div class="category-range">General public not likely affected</div>
+            </div>
+          </div>
+          
+          <div class="category">
+            <div class="color-box" style="background-color: var(--unhealthy);"></div>
+            <div class="category-info">
+              <div class="category-name">Unhealthy (151-200)</div>
+              <div class="category-range">Everyone may begin to experience effects</div>
+            </div>
+          </div>
+          
+          <div class="category">
+            <div class="color-box" style="background-color: var(--very-unhealthy);"></div>
+            <div class="category-info">
+              <div class="category-name">Very Unhealthy (201-300)</div>
+              <div class="category-range">Health alert: everyone may experience more serious effects</div>
+            </div>
+          </div>
+          
+          <div class="category">
+            <div class="color-box" style="background-color: var(--hazardous);"></div>
+            <div class="category-info">
+              <div class="category-name">Hazardous (301-500)</div>
+              <div class="category-range">Health warnings of emergency conditions</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>AQI Prediction System © 2023 | For demonstration purposes only</p>
+    </footer>
+  </div>
+
+  <script>
+    // Form submission loading indicator
+    const form = document.getElementById('prediction-form');
+    const submitBtn = document.getElementById('predict-btn');
+    const loading = document.getElementById('loading');
+    const resultSection = document.getElementById('result-section');
+    const gaugeNeedle = document.getElementById('gauge-needle');
+    const categoryLabel = document.getElementById('category-label');
+    const pm25Value = document.getElementById('pm25-value');
+    const aqiValue = document.getElementById('aqi-value');
+    
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      loading.style.display = 'block';
+      
+      // Simulate API call delay
+      setTimeout(() => {
+        // Generate random values for demonstration
+        const randomPM25 = (Math.random() * 100).toFixed(1);
+        const randomAQI = Math.floor(Math.random() * 300);
+        
+        // Update values
+        pm25Value.textContent = randomPM25;
+        aqiValue.textContent = randomAQI;
+        
+        // Update gauge position (0-100% based on AQI value, max 500)
+        const gaugePosition = Math.min(randomAQI / 5, 100);
+        gaugeNeedle.style.left = `${gaugePosition}%`;
+        
+        // Update category
+        let category, color, bgColor;
+        if (randomAQI <= 50) {
+          category = "Good";
+          color = "var(--good)";
+          bgColor = "rgba(0, 153, 102, 0.2)";
+        } else if (randomAQI <= 100) {
+          category = "Moderate";
+          color = "var(--moderate)";
+          bgColor = "rgba(255, 222, 51, 0.2)";
+        } else if (randomAQI <= 150) {
+          category = "Unhealthy for Sensitive Groups";
+          color = "var(--sensitive)";
+          bgColor = "rgba(255, 153, 51, 0.2)";
+        } else if (randomAQI <= 200) {
+          category = "Unhealthy";
+          color = "var(--unhealthy)";
+          bgColor = "rgba(204, 0, 51, 0.2)";
+        } else if (randomAQI <= 300) {
+          category = "Very Unhealthy";
+          color = "var(--very-unhealthy)";
+          bgColor = "rgba(102, 0, 153, 0.2)";
+        } else {
+          category = "Hazardous";
+          color = "var(--hazardous)";
+          bgColor = "rgba(126, 0, 35, 0.2)";
+        }
+        
+        categoryLabel.textContent = category;
+        categoryLabel.style.color = color;
+        categoryLabel.style.backgroundColor = bgColor;
+        
+        // Show results
+        resultSection.style.display = 'block';
+        
+        // Re-enable button
+        submitBtn.disabled = false;
+        loading.style.display = 'none';
+      }, 1500);
+    });
+    
+    // Input validation
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.addEventListener('input', (e) => {
+        if (e.target.value < 0) {
+          e.target.value = 0;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
